@@ -1,3 +1,4 @@
+#![allow(warnings)]
 mod data;
 mod utils;
 mod models;
@@ -5,17 +6,29 @@ mod signals;
 mod trade_report;
 pub mod oracle;
 
-use chrono::Local;
 use std::io::{self, Write};
 use std::string::String;
 use std::thread;
 use std::time::Duration;
+
+use chrono::Local;
+use figlet_rs::FIGfont;
+
 use crate::models::arima::Arima;
 use crate::models::sma::Sma;
 use crate::signals::arima_signals::trade_signal_arima;
 use crate::signals::sma_signals::trade_signal_sma;
 
 fn main() {
+    // Console title text
+    let standard_font = FIGfont::standard().unwrap();
+    let trade_robot_text = standard_font.convert("TRADE ROBOT (ARIMA/SMA)");
+    let author_text = standard_font.convert("Author: ronik-v");
+    let license_text = standard_font.convert("License: MIT");
+    println!("{}", trade_robot_text.unwrap());
+    println!("{}", author_text.unwrap());
+    println!("{}", license_text.unwrap());
+
     let mut ticker = String::new();
     print!("Enter your ticker >> ");
     io::stdout().flush().unwrap();
@@ -26,8 +39,8 @@ fn main() {
     let today = Local::now().date_naive();
 
     // String formatting to template - "yyyy-mm-dd"
-    let date_start = "2024-06-07".to_string(); // today.format("%Y-%m-%d").to_string();
-    let date_end = "2024-06-07".to_string(); // today.format("%Y-%m-%d").to_string();
+    let date_start = today.format("%Y-%m-%d").to_string(); // "2024-06-07".to_string();
+    let date_end = today.format("%Y-%m-%d").to_string(); // "2024-06-07".to_string();
     let interval = 1;
 
     loop {

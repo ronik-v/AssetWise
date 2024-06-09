@@ -13,7 +13,7 @@ pub struct Ticker {
     pub end: Vec<String>,
 }
 
-pub fn api_url(ticker: &str, date_start: &str, date_end: &str, interval: u32) -> String {
+pub fn api_url(ticker: &str, date_start: String, date_end: String, interval: u32) -> String {
     let api_prefix = "https://iss.moex.com/iss/engines/stock/markets/shares/securities/";
     let json_format_data_piece = "/candles.json";
     let date_from = "?from=";
@@ -39,7 +39,7 @@ pub fn prepare_data_structure(data: &[Vec<Value>]) -> Ticker {
     }
 }
 
-pub fn get_ticker_data(ticker: &str, date_start: &str, date_end: &str, interval: u32) -> Result<Ticker, Box<dyn std::error::Error>> {
+pub fn get_ticker_data(ticker: &str, date_start: String, date_end: String, interval: u32) -> Result<Ticker, Box<dyn std::error::Error>> {
     let api_data_url = api_url(ticker, date_start, date_end, interval);
     let client = Client::new();
     let response = client.get(&api_data_url).send()?;

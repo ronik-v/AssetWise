@@ -1,2 +1,2 @@
-mod arima_signals;
-mod sma_signals;
+pub mod arima_signals;
+pub mod sma_signals;

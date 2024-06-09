@@ -1,6 +1,10 @@
 // TODO: Реалировать временного тоггового робота для ARIMA и SMA и теогетико игровой стартегии
 // TODO: Демон процесс который проверяет набор акций
 mod data;
+mod utils;
+mod models;
+pub mod oracle;
+mod signals;
 
 fn main() {
     let ticker = "SBER";

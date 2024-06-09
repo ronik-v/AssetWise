@@ -1,3 +1,8 @@
+/*
+    Calculation of autoregressive moving average with variation (1, 0, 1)
+    It is preferable in issuing trading status
+*/
+
 pub struct Arima {
     pub price_data: Vec<f64>,
 }

@@ -1,3 +1,8 @@
+/*
+    Implementation of a simple moving average taking into account offset
+    To build the strategy, an offset of 5 and 12 is used
+*/
+
 pub struct Sma {
     pub data: Vec<f64>,
     pub split: usize,

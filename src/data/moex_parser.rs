@@ -3,6 +3,7 @@ use serde_json::Value;
 
 #[derive(Debug)]
 pub struct Ticker {
+    // Ticker data from MOEX API
     pub open: Vec<f64>,
     pub close: Vec<f64>,
     pub high: Vec<f64>,
@@ -14,6 +15,7 @@ pub struct Ticker {
 }
 
 pub fn api_url(ticker: &str, date_start: String, date_end: String, interval: u32) -> String {
+    // Prepare url for api request
     let api_prefix = "https://iss.moex.com/iss/engines/stock/markets/shares/securities/";
     let json_format_data_piece = "/candles.json";
     let date_from = "?from=";
@@ -40,6 +42,7 @@ pub fn prepare_data_structure(data: &[Vec<Value>]) -> Ticker {
 }
 
 pub fn get_ticker_data(ticker: &str, date_start: String, date_end: String, interval: u32) -> Result<Ticker, Box<dyn std::error::Error>> {
+    // Getting data structure with api
     let api_data_url = api_url(ticker, date_start, date_end, interval);
     let client = Client::new();
     let response = client.get(&api_data_url).send()?;

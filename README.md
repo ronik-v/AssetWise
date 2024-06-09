@@ -1,9 +1,7 @@
 # Trade Robot for Algorithmic Trading
-
-[![Build Status](https://img.shields.io/travis/ronik-v/trade_robot/master.svg?style=flat-square)](https://travis-ci.org/ronik-v/trade_robot)
-[![License](https://img.shields.io/github/license/ronik-v/trade_robot.svg?style=flat-square)](https://github.com/ronik-v/trade_robot/blob/master/LICENSE)
-[![Rust Version](https://img.shields.io/badge/rust-1.57.0-orange.svg?style=flat-square)](https://www.rust-lang.org/)
-[![IDE](https://img.shields.io/badge/IDE-RustRover%202024.1-blue.svg?style=flat-square)](https://www.rust-lang.org/tools/install)
+![License](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)
+![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white)
+![IDE](https://img.shields.io/badge/IDE-RustRover%202024.1-blue.svg?style=flat-square)
 
 Welcome to Trade Robot, a console-based desktop application written in Rust! This robot utilizes ARIMA and SMA strategies (SMA5 / SMA12) for algorithmic trading.
 

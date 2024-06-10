@@ -8,7 +8,7 @@ pub fn log_state(state: States, model: String) {
     let file = file!();
     let line = line!();
     println!(
-        "[{}] File: {}, Line: {} - Model: {} -State: {:?}",
+        "[{}] File: {}, Line: {} - Model: {} - State: {:?}",
         now.format("%Y-%m-%d %H:%M:%S"),
         file,
         line,

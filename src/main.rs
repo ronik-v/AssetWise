@@ -13,11 +13,36 @@ use std::time::Duration;
 
 use chrono::Local;
 use figlet_rs::FIGfont;
+use crate::data::moex_parser::Ticker;
 
 use crate::models::arima::Arima;
 use crate::models::sma::Sma;
 use crate::signals::arima_signals::trade_signal_arima;
 use crate::signals::sma_signals::trade_signal_sma;
+
+fn trade_robot(data: Ticker) {
+    let price_data = data.close;
+    // Use models for getting trade states
+    let arima = Arima { price_data: price_data.clone() };
+    let prediction = arima.model_prediction_time_series();
+    // Arima predictions
+    //println!("ARIMA model prediction time series: {:?}", prediction);
+
+    let sma5 = Sma { data: price_data.clone(), split: 5 };
+    let sma5_time_series = sma5.values();
+
+    let sma12 = Sma { data: price_data, split: 12 };
+    let sma12_time_series = sma12.values();
+    //print!("SMA5: {:?}", sma5_time_series);
+    //print!("SMA12: {:?}", sma12_time_series);
+
+    // State predictions
+    let arima_state = trade_signal_arima(prediction);
+    let sma_state = trade_signal_sma(sma5_time_series, sma12_time_series);
+    // Logging states
+    trade_report::log_state(arima_state, "ARIMA strategy".to_string());
+    trade_report::log_state(sma_state, "SMA strategy".to_string());
+}
 
 fn main() {
     // Console title text
@@ -47,27 +72,10 @@ fn main() {
         let ticker_data = data::moex_parser::get_ticker_data(ticker, date_start.clone(), date_end.clone(), interval);
         match ticker_data {
             Ok(data) => {
-                let price_data = data.close;
-                // Use models for getting trade states
-                let arima = Arima { price_data: price_data.clone() };
-                let prediction = arima.model_prediction_time_series();
-                // Arima predictions
-                //println!("ARIMA model prediction time series: {:?}", prediction);
-
-                let sma5 = Sma { data: price_data.clone(), split: 5 };
-                let sma5_time_series = sma5.values();
-
-                let sma12 = Sma { data: price_data, split: 12 };
-                let sma12_time_series = sma12.values();
-                //print!("SMA5: {:?}", sma5_time_series);
-                //print!("SMA12: {:?}", sma12_time_series);
-
-                // State predictions
-                let arima_state = trade_signal_arima(prediction);
-                let sma_state = trade_signal_sma(sma5_time_series, sma12_time_series);
-                // Logging states
-                trade_report::log_state(arima_state, "ARIMA strategy".to_string());
-                trade_report::log_state(sma_state, "SMA strategy".to_string());
+                let handel = thread::spawn(|| {
+                    trade_robot(data);
+                });
+                handel.join().unwrap();
             },
             Err(e) => eprintln!("Error fetching data: {}", e),
         }

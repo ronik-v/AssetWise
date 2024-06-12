@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use reqwest::blocking::Client;
 use serde_json::Value;
 
@@ -14,7 +15,7 @@ pub struct Ticker {
     pub end: Vec<String>,
 }
 
-pub fn api_url(ticker: &str, date_start: String, date_end: String, interval: u32) -> String {
+pub fn api_url(ticker: Arc<String>, date_start: String, date_end: String, interval: u32) -> String {
     // Prepare url for api request
     let api_prefix = "https://iss.moex.com/iss/engines/stock/markets/shares/securities/";
     let json_format_data_piece = "/candles.json";
@@ -41,7 +42,7 @@ pub fn prepare_data_structure(data: &[Vec<Value>]) -> Ticker {
     }
 }
 
-pub fn get_ticker_data(ticker: &str, date_start: String, date_end: String, interval: u32) -> Result<Ticker, Box<dyn std::error::Error>> {
+pub fn get_ticker_data(ticker: Arc<String>, date_start: String, date_end: String, interval: u32) -> Result<Ticker, Box<dyn std::error::Error>> {
     // Getting data structure with api
     let api_data_url = api_url(ticker, date_start, date_end, interval);
     let client = Client::new();

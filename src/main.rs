@@ -9,6 +9,7 @@ pub mod oracle;
 use std::io::{self, Write};
 use std::string::String;
 use std::thread;
+use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::Local;
@@ -20,7 +21,7 @@ use crate::models::sma::Sma;
 use crate::signals::arima_signals::trade_signal_arima;
 use crate::signals::sma_signals::trade_signal_sma;
 
-fn trade_robot(data: Ticker) {
+fn trade_robot(ticker: Arc<String>, data: Ticker) {
     let price_data = data.close;
     // Use models for getting trade states
     let arima = Arima { price_data: price_data.clone() };
@@ -40,8 +41,8 @@ fn trade_robot(data: Ticker) {
     let arima_state = trade_signal_arima(prediction);
     let sma_state = trade_signal_sma(sma5_time_series, sma12_time_series);
     // Logging states
-    trade_report::log_state(arima_state, "ARIMA strategy".to_string());
-    trade_report::log_state(sma_state, "SMA strategy".to_string());
+    trade_report::log_state(&ticker, arima_state, "ARIMA strategy".to_string(), (20, 0));
+    trade_report::log_state(&ticker, sma_state, "SMA strategy".to_string(), (21, 0));
 }
 
 fn main() {
@@ -58,7 +59,8 @@ fn main() {
     print!("Enter your ticker >> ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut ticker).unwrap();
-    let ticker = ticker.trim();
+    let ticker = ticker.trim().to_string();
+    let ticker = Arc::new(ticker);
 
     // Today
     let today = Local::now().date_naive();
@@ -69,11 +71,12 @@ fn main() {
     let interval = 1;
 
     loop {
-        let ticker_data = data::moex_parser::get_ticker_data(ticker, date_start.clone(), date_end.clone(), interval);
+        let ticker_data = data::moex_parser::get_ticker_data(ticker.clone(), date_start.clone(), date_end.clone(), interval);
         match ticker_data {
             Ok(data) => {
-                let handel = thread::spawn(|| {
-                    trade_robot(data);
+                let ticker_clone = ticker.clone();
+                let handel = thread::spawn(move || {
+                    trade_robot(ticker_clone, data);
                 });
                 handel.join().unwrap();
             },

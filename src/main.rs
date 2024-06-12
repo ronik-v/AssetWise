@@ -23,23 +23,21 @@ use crate::signals::sma_signals::trade_signal_sma;
 
 fn trade_robot(ticker: Arc<String>, data: Ticker) {
     let price_data = data.close;
+
     // Use models for getting trade states
     let arima = Arima { price_data: price_data.clone() };
     let prediction = arima.model_prediction_time_series();
-    // Arima predictions
-    //println!("ARIMA model prediction time series: {:?}", prediction);
 
-    let sma5 = Sma { data: price_data.clone(), split: 5 };
+    let sma5 = Sma::new(price_data.clone(), 5);
     let sma5_time_series = sma5.values();
 
-    let sma12 = Sma { data: price_data, split: 12 };
+    let sma12 = Sma::new(price_data, 12);
     let sma12_time_series = sma12.values();
-    //print!("SMA5: {:?}", sma5_time_series);
-    //print!("SMA12: {:?}", sma12_time_series);
 
     // State predictions
     let arima_state = trade_signal_arima(prediction);
     let sma_state = trade_signal_sma(sma5_time_series, sma12_time_series);
+
     // Logging states
     trade_report::log_state(&ticker, arima_state, "ARIMA strategy".to_string(), (20, 0));
     trade_report::log_state(&ticker, sma_state, "SMA strategy".to_string(), (21, 0));
@@ -66,8 +64,8 @@ fn main() {
     let today = Local::now().date_naive();
 
     // String formatting to template - "yyyy-mm-dd"
-    let date_start = today.format("%Y-%m-%d").to_string(); // "2024-06-07".to_string();
-    let date_end = today.format("%Y-%m-%d").to_string(); // "2024-06-07".to_string();
+    let date_start = today.format("%Y-%m-%d").to_string();
+    let date_end = today.format("%Y-%m-%d").to_string();
     let interval = 1;
 
     loop {
@@ -75,10 +73,12 @@ fn main() {
         match ticker_data {
             Ok(data) => {
                 let ticker_clone = ticker.clone();
-                let handel = thread::spawn(move || {
+                let handle = thread::spawn(move || {
                     trade_robot(ticker_clone, data);
                 });
-                handel.join().unwrap();
+                if let Err(e) = handle.join() {
+                    eprintln!("Error in trade_robot thread: {:?}", e);
+                }
             },
             Err(e) => eprintln!("Error fetching data: {}", e),
         }

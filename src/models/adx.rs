@@ -10,15 +10,16 @@
         Close your short position if +DI > -DI or ADX falls.
 */
 use crate::data::moex_parser::Ticker;
-use crate::Sma;
+use crate::models::ema::Ema;
+use crate::models::ma::MA;
 
-struct Adx {
-    ticker: Ticker,
-    split: i32
+pub struct Adx {
+    pub ticker: Ticker,
+    pub split: i32
 }
 
 impl Adx {
-    pub fn new(&self, ticker: Ticker, split: i32) -> Self {
+    pub fn new(ticker: Ticker, split: i32) -> Self {
         Self { ticker, split }
     }
 
@@ -75,7 +76,6 @@ impl Adx {
     }
 
     pub fn directional_indicators(&self, option: bool) -> Vec<f64> {
-        // TODO: Use ema later (formula - https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%D0%BD%D0%B0%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE_%D0%B4%D0%B2%D0%B8%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F#:~:text=directional%20indicators)
         let mut directional_indicators_data: Vec<f64> = Vec::new();
         let true_range: Vec<f64> = self.true_range();
         let directional_movement_plus: Vec<f64> = self.directional_movement(option);
@@ -83,11 +83,16 @@ impl Adx {
             let value: f64 = directional_movement_plus[i] / true_range[i];
             directional_indicators_data.push(value);
         }
-        // calc mean average
-        let sma: Sma = Sma::new(directional_indicators_data, self.split as usize);
+        // calc exponential mean average
+        let ema: Ema = Ema::new(directional_indicators_data);
 
-        sma.values()
+        ema.values()
     }
 
-    pub fn adx(&self) {}
+    pub fn adx(&self) -> Vec<f64> {
+        // Average directional movement index function
+        let directional_indicators_data: Vec<f64> = self.directional_indicators(true);
+        let ma = MA::new(14, directional_indicators_data); // classic lag value
+        ma.values()
+    }
 }

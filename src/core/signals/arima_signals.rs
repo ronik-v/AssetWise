@@ -1,4 +1,4 @@
-use crate::utils::states::States;
+use crate::core::utils::states::States;
 
 pub fn trade_signal_arima(price_data: Vec<f64>) -> States {
     // Autoregressive moving average strategy (1, 0, 1)

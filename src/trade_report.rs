@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
-use crate::utils::states::States;
+use crate::core::utils::states::States;
 
 pub struct Logger {
     logs: Arc<Mutex<HashMap<Arc<String>, Vec<String>>>>,

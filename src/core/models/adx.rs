@@ -9,9 +9,9 @@
         Sell short if +DI < -DI and ADX is rising.
         Close your short position if +DI > -DI or ADX falls.
 */
-use crate::data::moex_parser::Ticker;
-use crate::models::ema::Ema;
-use crate::models::ma::MA;
+use crate::core::data::moex_parser::Ticker;
+use crate::core::models::ema::Ema;
+use crate::core::models::ma::MA;
 
 pub struct Adx {
     pub ticker: Ticker,

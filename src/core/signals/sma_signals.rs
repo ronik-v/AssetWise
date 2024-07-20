@@ -1,4 +1,4 @@
-use crate::utils::states::States;
+use crate::core::utils::states::States;
 
 pub fn trade_signal_sma(sma_5_data: Vec<f64>, sma_12_data: Vec<f64>) -> States {
     // Moving average strategy with implementations of SMA5 and SMA12 pairs

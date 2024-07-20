@@ -1,7 +1,7 @@
 /*
    Strategies with directional movement system indicator
 */
-use crate::utils::states::States;
+use crate::core::utils::states::States;
 // TODO: refactor!!!
 
 

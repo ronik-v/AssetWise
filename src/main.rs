@@ -1,9 +1,6 @@
 #![allow(warnings)]
-mod data;
-mod utils;
-mod models;
-mod signals;
 mod trade_report;
+mod core;
 
 use std::io::{self, Write};
 use std::string::String;
@@ -13,15 +10,15 @@ use std::time::Duration;
 
 use chrono::Local;
 use figlet_rs::FIGfont;
-use crate::data::moex_parser::Ticker;
+use crate::core::data::moex_parser::Ticker;
 
 use crate::trade_report::Logger;
-use crate::models::arima::Arima;
-use crate::models::sma::Sma;
-use crate::models::adx::Adx;
-use crate::signals::arima_signals::trade_signal_arima;
-use crate::signals::sma_signals::trade_signal_sma;
-use crate::signals::adx_signals::trade_signal_adx;
+use crate::core::models::arima::Arima;
+use crate::core::models::sma::Sma;
+use crate::core::models::adx::Adx;
+use crate::core::signals::arima_signals::trade_signal_arima;
+use crate::core::signals::sma_signals::trade_signal_sma;
+use crate::core::signals::adx_signals::trade_signal_adx;
 
 
 fn trade_robot(ticker: Arc<String>, data: Ticker, logger: Arc<Mutex<Logger>>) {
@@ -97,7 +94,7 @@ fn main() {
                 let interval = 1;
 
                 loop {
-                    let ticker_data = data::moex_parser::get_ticker_data(ticker.clone(), date_start.clone(), date_end.clone(), interval);
+                    let ticker_data = core::data::moex_parser::get_ticker_data(ticker.clone(), date_start.clone(), date_end.clone(), interval);
                     match ticker_data {
                         Ok(data) => {
                             trade_robot(ticker.clone(), data, Arc::clone(&logger));

@@ -9,6 +9,7 @@ use std::thread;
 use std::time::Duration;
 
 use chrono::Local;
+use druid::piet::TextStorage;
 use figlet_rs::FIGfont;
 use crate::core::data::moex_parser::Ticker;
 
@@ -16,9 +17,8 @@ use crate::trade_report::Logger;
 use crate::core::models::arima::Arima;
 use crate::core::models::sma::Sma;
 use crate::core::models::adx::Adx;
-use crate::core::signals::arima_signals::trade_signal_arima;
-use crate::core::signals::sma_signals::trade_signal_sma;
-use crate::core::signals::adx_signals::trade_signal_adx;
+use crate::core::signals::signal::Signal;
+use crate::core::signals::signal::TradeSignal;
 
 
 fn trade_robot(ticker: Arc<String>, data: Ticker, logger: Arc<Mutex<Logger>>) {
@@ -42,10 +42,11 @@ fn trade_robot(ticker: Arc<String>, data: Ticker, logger: Arc<Mutex<Logger>>) {
 
 
     // State predictions
-    let arima_state = trade_signal_arima(prediction);
-    let sma_state = trade_signal_sma(sma5_time_series, sma12_time_series);
-    let adx_fast_state = trade_signal_adx(di_plus.clone(), di_minus.clone(), adx_values.clone(), true);
-    let adx_long_state = trade_signal_adx(di_plus.clone(), di_minus.clone(), adx_values.clone(), false);
+    let signal = TradeSignal;
+    let arima_state = signal.arima(prediction);
+    let sma_state = signal.sma(sma5_time_series, sma12_time_series);
+    let adx_fast_state = signal.adx(di_plus.clone(), di_minus.clone(), adx_values.clone(), true);
+    let adx_long_state = signal.adx(di_plus.clone(), di_minus.clone(), adx_values.clone(), false);
 
     // Logging states
     println!("====================================================================");
@@ -89,8 +90,8 @@ fn main() {
                 // Today
                 let today = Local::now().date_naive();
                 // String formatting to template - "yyyy-mm-dd"
-                let date_start = today.format("%Y-%m-%d").to_string();
-                let date_end = today.format("%Y-%m-%d").to_string();
+                let date_start = "2024-07-25".to_string(); // 2024-07-25 today.format("%Y-%m-%d").to_string()
+                let date_end = "2024-07-25".to_string();
                 let interval = 1;
 
                 loop {
@@ -111,3 +112,25 @@ fn main() {
         thread::sleep(Duration::from_secs(1));
     }
 }
+//
+// mod ui;
+//
+// use druid::widget::Label;
+// use druid::{AppLauncher, PlatformError, Widget, WindowDesc};
+//
+// fn build_root_widget() -> impl Widget<()> {
+//     Label::new("Hello, World!")
+// }
+//
+// fn main() -> Result<(), PlatformError> {
+//     let main_window = WindowDesc::new(build_root_widget())
+//         .title("Hello, World!")
+//         .window_size((400.0, 400.0));
+//
+//     AppLauncher::with_window(main_window)
+//         .launch(())
+//         .expect("Failed to launch application");
+//
+//     Ok(())
+// }
+

@@ -2,135 +2,141 @@
 mod trade_report;
 mod core;
 
-use std::io::{self, Write};
-use std::string::String;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
+use eframe::{egui, epi};
+use egui::plot::{Line, Plot, Value, Values};
 
-use chrono::Local;
-use druid::piet::TextStorage;
-use figlet_rs::FIGfont;
-use crate::core::data::moex_parser::Ticker;
+#[derive(PartialEq, Default)]
+enum Page {
+    #[default]
+    Home,
+    Strategy,
+    Settings,
+}
 
-use crate::trade_report::Logger;
-use crate::core::models::arima::Arima;
-use crate::core::models::sma::Sma;
-use crate::core::models::adx::Adx;
-use crate::core::signals::signal::Signal;
-use crate::core::signals::signal::TradeSignal;
+#[derive(Default)]
+struct MyApp {
+    current_page: Page,
+    ticker: String,
+    strategy: String,
+    theme: egui::Visuals,
+    chart_type: ChartType,
+}
 
+#[derive(PartialEq)]
+enum ChartType {
+    Line,
+    Candlestick,
+}
 
-fn trade_robot(ticker: Arc<String>, data: Ticker, logger: Arc<Mutex<Logger>>) {
-    let ticker_data = data;
-    let price_data = ticker_data.close.clone();
+impl Default for ChartType {
+    fn default() -> Self {
+        ChartType::Line
+    }
+}
 
-    // Use models for getting trade states
-    let arima = Arima { price_data: price_data.clone() };
-    let prediction = arima.model_prediction_time_series();
+impl epi::App for MyApp {
+    fn update(&mut self, ctx: &egui::CtxRef, _: &epi::Frame) {
+        egui::TopBottomPanel::top("header").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.heading("Trading Bot UI");
+                ui.with_layout(egui::Layout::right_to_left(), |ui| {
+                    if ui.button("⚙").clicked() {
+                        self.current_page = Page::Settings;
+                    }
+                });
+            });
+        });
 
-    let sma5 = Sma::new(price_data.clone(), 5);
-    let sma5_time_series = sma5.values();
+        egui::CentralPanel::default().show(ctx, |ui| {
+            match self.current_page {
+                Page::Home => self.show_home(ui),
+                Page::Strategy => self.show_strategy(ui),
+                Page::Settings => self.show_settings(ui, ctx),
+            }
+        });
+    }
 
-    let sma12 = Sma::new(price_data, 12);
-    let sma12_time_series = sma12.values();
+    fn name(&self) -> &str {
+        "Quantum Trade Lab"
+    }
+}
 
-    let adx = Adx::new(ticker_data, 5);
-    let adx_values = adx.adx();
-    let di_plus = adx.directional_indicators(true);
-    let di_minus = adx.directional_indicators(false);
+impl MyApp {
+    fn show_home(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Добро пожаловать в торгового робота!");
+        if ui.button("Перейти к анализу стратегий").clicked() {
+            self.current_page = Page::Strategy;
+        }
+    }
 
+    fn show_strategy(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Анализ стратегий");
+        ui.horizontal(|ui| {
+            ui.label("Название тикера:");
+            ui.text_edit_singleline(&mut self.ticker);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Название стратегии:");
+            egui::ComboBox::from_label("Выберите стратегию")
+                .selected_text(&self.strategy)
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut self.strategy, "Скользящие средние".to_string(), "Скользящие средние");
+                    ui.selectable_value(&mut self.strategy, "Авторегрессионная скользящая средняя".to_string(), "Авторегрессионная скользящая средняя");
+                    ui.selectable_value(&mut self.strategy, "Система направленного движения".to_string(), "Система направленного движения");
+                });
+        });
 
-    // State predictions
-    let signal = TradeSignal;
-    let arima_state = signal.arima(prediction);
-    let sma_state = signal.sma(sma5_time_series, sma12_time_series);
-    let adx_fast_state = signal.adx(di_plus.clone(), di_minus.clone(), adx_values.clone(), true);
-    let adx_long_state = signal.adx(di_plus.clone(), di_minus.clone(), adx_values.clone(), false);
+        ui.separator();
 
-    // Logging states
-    println!("====================================================================");
-    logger.lock().unwrap().log_state(&ticker, arima_state, "ARIMA strategy".to_string());
-    logger.lock().unwrap().log_state(&ticker, sma_state, "SMA strategy".to_string());
-    logger.lock().unwrap().log_state(&ticker, adx_fast_state, "ADX fast strategy".to_string());
-    logger.lock().unwrap().log_state(&ticker, adx_long_state, "ADX long strategy".to_string());
-    println!("====================================================================");
+        // Пример графика
+        let data: Vec<Value> = (0..100)
+            .map(|x| Value::new(x as f64, (x as f64).sin()))
+            .collect();
+
+        Plot::new("Chart")
+            .view_aspect(2.0)
+            .show(ui, |plot_ui| {
+                match self.chart_type {
+                    ChartType::Line => {
+                        plot_ui.line(Line::new(Values::from_values(data)).color(egui::Color32::from_rgb(200, 100, 100)));
+                    }
+                    ChartType::Candlestick => {
+                        // Добавьте сюда код для отображения японских свечей
+                    }
+                }
+            });
+    }
+
+    fn show_settings(&mut self, ui: &mut egui::Ui, ctx: &egui::CtxRef) {
+        ui.heading("Настройки");
+        ui.separator();
+
+        ui.horizontal(|ui| {
+            ui.label("Тема:");
+            if ui.button("Светлая").clicked() {
+                self.theme = egui::Visuals::light();
+                ctx.set_visuals(self.theme.clone());
+            }
+            if ui.button("Тёмная").clicked() {
+                self.theme = egui::Visuals::dark();
+                ctx.set_visuals(self.theme.clone());
+            }
+        });
+
+        ui.horizontal(|ui| {
+            ui.label("Формат графика:");
+            if ui.button("Обычный график").clicked() {
+                self.chart_type = ChartType::Line;
+            }
+            if ui.button("Японские свечи").clicked() {
+                self.chart_type = ChartType::Candlestick;
+            }
+        });
+    }
 }
 
 fn main() {
-    // Console title text
-    let standard_font = FIGfont::standard().unwrap();
-    let trade_robot_text = standard_font.convert("TRADE ROBOT (ARIMA/SMA/ADX)");
-    let author_text = standard_font.convert("Author: ronik-v");
-    let license_text = standard_font.convert("License: MIT");
-    println!("{}", trade_robot_text.unwrap());
-    println!("{}", author_text.unwrap());
-    println!("{}", license_text.unwrap());
-
-    let logger = Arc::new(Mutex::new(Logger::new()));
-
-    let tickers = Arc::new(Mutex::new(Vec::new()));
-    let tickers_clone = Arc::clone(&tickers);
-    let logger_clone = Arc::clone(&logger);
-
-    thread::spawn(move || {
-        loop {
-            // Ticker input
-            let mut ticker = String::new();
-            io::stdout().flush().unwrap();
-            io::stdin().read_line(&mut ticker).unwrap();
-            let ticker = ticker.trim().to_string();
-            let ticker = Arc::new(ticker);
-
-            tickers_clone.lock().unwrap().push(ticker.clone());
-
-            let logger = Arc::clone(&logger_clone);
-
-            thread::spawn(move || {
-                // Today
-                let today = Local::now().date_naive();
-                // String formatting to template - "yyyy-mm-dd"
-                let date_start = "2024-07-25".to_string(); // 2024-07-25 today.format("%Y-%m-%d").to_string()
-                let date_end = "2024-07-25".to_string();
-                let interval = 1;
-
-                loop {
-                    let ticker_data = core::data::moex_parser::get_ticker_data(ticker.clone(), date_start.clone(), date_end.clone(), interval);
-                    match ticker_data {
-                        Ok(data) => {
-                            trade_robot(ticker.clone(), data, Arc::clone(&logger));
-                        },
-                        Err(_) => {},
-                    }
-                    // Sleep
-                    thread::sleep(Duration::from_secs(60));
-                }
-            });
-        }
-    });
-    loop {
-        thread::sleep(Duration::from_secs(1));
-    }
+    let app = MyApp::default();
+    let native_options = eframe::NativeOptions::default();
+    eframe::run_native(Box::new(app), native_options);
 }
-//
-// mod ui;
-//
-// use druid::widget::Label;
-// use druid::{AppLauncher, PlatformError, Widget, WindowDesc};
-//
-// fn build_root_widget() -> impl Widget<()> {
-//     Label::new("Hello, World!")
-// }
-//
-// fn main() -> Result<(), PlatformError> {
-//     let main_window = WindowDesc::new(build_root_widget())
-//         .title("Hello, World!")
-//         .window_size((400.0, 400.0));
-//
-//     AppLauncher::with_window(main_window)
-//         .launch(())
-//         .expect("Failed to launch application");
-//
-//     Ok(())
-// }
-

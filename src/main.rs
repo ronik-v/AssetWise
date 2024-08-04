@@ -38,12 +38,14 @@ impl epi::App for MyApp {
     fn update(&mut self, ctx: &egui::CtxRef, _: &epi::Frame) {
         egui::TopBottomPanel::top("header").show(ctx, |ui| {
             ui.horizontal(|ui| {
+                ui.add_space(10.0);
                 ui.heading("Quantum Trade Lab");
                 ui.with_layout(egui::Layout::right_to_left(), |ui| {
                     if ui.button("⚙").clicked() {
                         self.current_page = Page::Settings;
                     }
                 });
+                ui.add_space(10.0);
             });
         });
 
@@ -63,21 +65,29 @@ impl epi::App for MyApp {
 
 impl MyApp {
     fn show_home(&mut self, ui: &mut egui::Ui) {
-        ui.heading("Добро пожаловать в торгового робота!");
-        if ui.button("Перейти к анализу стратегий").clicked() {
-            self.current_page = Page::Strategy;
-        }
+        ui.vertical_centered(|ui| {
+            ui.add_space(20.0);
+            ui.heading("Добро пожаловать в Quantum Trade Lab!");
+            ui.add_space(10.0);
+            if ui.button("Перейти к анализу стратегий").clicked() {
+                self.current_page = Page::Strategy;
+            }
+        });
     }
 
     fn show_strategy(&mut self, ui: &mut egui::Ui) {
+        ui.add_space(20.0);
         ui.heading("Анализ стратегий");
+
+        ui.add_space(10.0);
         ui.horizontal(|ui| {
             ui.label("Название тикера:");
             ui.text_edit_singleline(&mut self.ticker);
         });
+        ui.add_space(10.0);
         ui.horizontal(|ui| {
             ui.label("Название стратегии:");
-            egui::ComboBox::from_label("Выберите стратегию")
+            egui::ComboBox::from_label("")
                 .selected_text(&self.strategy)
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut self.strategy, "Скользящие средние".to_string(), "Скользящие средние");
@@ -86,9 +96,10 @@ impl MyApp {
                 });
         });
 
+        ui.add_space(20.0);
         ui.separator();
 
-        // Пример графика
+        ui.add_space(10.0);
         let data: Vec<Value> = (0..100)
             .map(|x| Value::new(x as f64, (x as f64).sin()))
             .collect();
@@ -106,15 +117,18 @@ impl MyApp {
                 }
             });
 
+        ui.add_space(10.0);
         if ui.button("Назад").clicked() {
             self.current_page = Page::Home;
         }
     }
 
     fn show_settings(&mut self, ui: &mut egui::Ui, ctx: &egui::CtxRef) {
+        ui.add_space(20.0);
         ui.heading("Настройки");
         ui.separator();
 
+        ui.add_space(10.0);
         ui.horizontal(|ui| {
             ui.label("Тема:");
             if ui.button("Светлая").clicked() {
@@ -127,6 +141,7 @@ impl MyApp {
             }
         });
 
+        ui.add_space(10.0);
         ui.horizontal(|ui| {
             ui.label("Формат графика:");
             if ui.button("Обычный график").clicked() {
@@ -137,6 +152,7 @@ impl MyApp {
             }
         });
 
+        ui.add_space(20.0);
         if ui.button("Назад на главную").clicked() {
             self.current_page = Page::Home;
         }

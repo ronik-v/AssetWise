@@ -38,7 +38,7 @@ impl epi::App for MyApp {
     fn update(&mut self, ctx: &egui::CtxRef, _: &epi::Frame) {
         egui::TopBottomPanel::top("header").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.heading("Trading Bot UI");
+                ui.heading("Quantum Trade Lab");
                 ui.with_layout(egui::Layout::right_to_left(), |ui| {
                     if ui.button("⚙").clicked() {
                         self.current_page = Page::Settings;
@@ -101,10 +101,14 @@ impl MyApp {
                         plot_ui.line(Line::new(Values::from_values(data)).color(egui::Color32::from_rgb(200, 100, 100)));
                     }
                     ChartType::Candlestick => {
-                        // Добавьте сюда код для отображения японских свечей
+                        // Add code for using Japanese candles
                     }
                 }
             });
+
+        if ui.button("Назад").clicked() {
+            self.current_page = Page::Home;
+        }
     }
 
     fn show_settings(&mut self, ui: &mut egui::Ui, ctx: &egui::CtxRef) {
@@ -132,6 +136,14 @@ impl MyApp {
                 self.chart_type = ChartType::Candlestick;
             }
         });
+
+        if ui.button("Назад на главную").clicked() {
+            self.current_page = Page::Home;
+        }
+
+        if ui.button("Назад к стратегиям").clicked() {
+            self.current_page = Page::Strategy;
+        }
     }
 }
 

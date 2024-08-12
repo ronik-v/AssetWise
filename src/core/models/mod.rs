@@ -3,3 +3,4 @@ pub mod sma;
 pub mod adx;
 pub mod ma;
 pub mod ema;
+mod utility_fuction;

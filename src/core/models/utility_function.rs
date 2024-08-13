@@ -41,7 +41,7 @@ impl UtilityFunction {
         if count > 0 {
             Ok(sum / count as f64)
         } else {
-            Err("Не найдено чисел для вычисления среднего значения.".into())
+            Err("Numbers for calculate mean not found.".into())
         }
     }
 

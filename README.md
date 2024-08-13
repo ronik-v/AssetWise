@@ -9,6 +9,14 @@ Welcome to Trade Robot, a console-based desktop application written in Rust! Thi
 
 - **ARIMA Strategy:** Implements ARIMA (AutoRegressive Integrated Moving Average) model for time-series prediction.
 - **SMA5 / SMA12 Strategy:** Utilizes Simple Moving Average (SMA) with two different periods (5 and 12) for trend analysis.
+- **ADX Strategy:** (Average Directional Movement Index)
+- **Utility function:** This function return utility state for investor. Calc with formula:
+    ```
+   U = E(R) - 0.5 * A * q^2, where
+      1) E(R) - CAPM value (income); 
+      2) A - risk value; 
+      3) q - mean square error;
+    ```
 - **Console-based Interface:** Designed for ease of use in a desktop environment.
 
 ## About

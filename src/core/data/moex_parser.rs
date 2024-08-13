@@ -2,7 +2,7 @@ use std::sync::Arc;
 use reqwest::blocking::Client;
 use serde_json::Value;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ticker {
     // Ticker data from MOEX API
     pub open: Vec<f64>,

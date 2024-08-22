@@ -49,12 +49,12 @@ impl Signal for TradeSignal {
         // Autoregressive moving average strategy (1, 0, 1)
         let last_index = price_data.len() - 1;
         let penultimate_index = price_data.len() - 2;
-        if price_data[last_index] > price_data[penultimate_index] {
-            return States::BUY
+        return if price_data[last_index] > price_data[penultimate_index] {
+            States::BUY
         } else if price_data[last_index] < price_data[penultimate_index] {
-            return States::SELL
+            States::SELL
         } else {
-            return States::WAIT
+            States::WAIT
         }
     }
 
@@ -62,12 +62,12 @@ impl Signal for TradeSignal {
         // Moving average strategy with implementations of SMA5 and SMA12 pairs
         let last_sma5_index = sma_5_data.len() - 1;
         let last_sma12_index = sma_12_data.len() - 1;
-        if sma_5_data[last_sma5_index] > sma_12_data[last_sma12_index] {
-            return States::BUY
+        return if sma_5_data[last_sma5_index] > sma_12_data[last_sma12_index] {
+            States::BUY
         } else if sma_5_data[last_sma5_index] < sma_12_data[last_sma12_index] {
-            return States::SELL
+            States::SELL
         } else {
-            return States::WAIT
+            States::WAIT
         }
     }
 }

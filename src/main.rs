@@ -138,9 +138,9 @@ impl MyApp {
 
                             if self.strategy == "Скользящие средние" {
                                 let sma5 = Sma::new(data.close.clone(), 5)
-                                    .values().iter().enumerate().skip(5).map(|(i, &p)| Value::new(i as f64, p)).collect();
+                                    .values().iter().enumerate().map(|(i, &p)| Value::new((i + 5) as f64, p)).collect();
                                 let sma12 = Sma::new(data.close.clone(), 12)
-                                    .values().iter().enumerate().skip(12).map(|(i, &p)| Value::new(i as f64, p)).collect();
+                                    .values().iter().enumerate().map(|(i, &p)| Value::new((i + 12) as f64, p)).collect();
 
                                 plot_ui.line(Line::new(Values::from_values(sma5)).color(egui::Color32::from_rgb(100, 200, 100)).name("SMA 5"));
                                 plot_ui.line(Line::new(Values::from_values(sma12)).color(egui::Color32::from_rgb(100, 100, 200)).name("SMA 12"));
@@ -178,9 +178,9 @@ impl MyApp {
 
                             if self.strategy == "Скользящие средние" {
                                 let sma5 = Sma::new(data.close.clone(), 5)
-                                    .values().iter().enumerate().skip(5).map(|(i, &p)| Value::new(i as f64, p)).collect();
+                                    .values().iter().enumerate().map(|(i, &p)| Value::new((i + 5) as f64, p)).collect();
                                 let sma12 = Sma::new(data.close.clone(), 12)
-                                    .values().iter().enumerate().skip(12).map(|(i, &p)| Value::new(i as f64, p)).collect();
+                                    .values().iter().enumerate().map(|(i, &p)| Value::new((i + 12) as f64, p)).collect();
 
                                 plot_ui.line(Line::new(Values::from_values(sma5)).color(egui::Color32::from_rgb(100, 200, 100)).name("SMA 5"));
                                 plot_ui.line(Line::new(Values::from_values(sma12)).color(egui::Color32::from_rgb(100, 100, 200)).name("SMA 12"));

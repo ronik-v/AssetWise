@@ -10,8 +10,9 @@ use crate::core::data::moex_parser::{api_url, prepare_data_structure, Ticker};
 use crate::core::models::arima::Arima;
 use crate::core::models::adx::Adx;
 use crate::core::models::sma::Sma;
+use crate::core::models::utility_function::UtilityFunction;
 use crate::core::signals::signal::{Signal, TradeSignal};
-use crate::core::utils::states::States;
+use crate::core::utils::states::{States, Utility};
 
 #[derive(PartialEq, Default)]
 enum Page {
@@ -28,7 +29,7 @@ struct MyApp {
     strategy: String,
     theme: egui::Visuals,
     chart_type: ChartType,
-    signal: Option<States>,
+    signal: Option<(States, Utility)>,
     ticker_data: Option<Ticker>,
 }
 
@@ -115,13 +116,20 @@ impl MyApp {
         }
 
         ui.add_space(20.0);
-        if let Some(signal) = &self.signal {
+        if let Some((signal, utility)) = &self.signal {
             let signal_text = match signal {
-                States::BUY => ("BUY", egui::Color32::GREEN),
-                States::SELL => ("SELL", egui::Color32::RED),
-                States::WAIT => ("WAIT", egui::Color32::YELLOW),
+                States::BUY => ("Trade Signal: BUY", egui::Color32::GREEN),
+                States::SELL => ("Trade Signal: SELL", egui::Color32::RED),
+                States::WAIT => ("Trade Signal: WAIT", egui::Color32::YELLOW),
             };
             ui.colored_label(signal_text.1, signal_text.0);
+
+            let utility_text = match utility {
+                Utility::HOLD => ("Utility: HOLD", egui::Color32::GREEN),
+                Utility::EXPECT => ("Utility: EXPECT", egui::Color32::YELLOW),
+                Utility::ESCAPE => ("Utility: ESCAPE", egui::Color32::RED),
+            };
+            ui.colored_label(utility_text.1, utility_text.0);
         }
 
         ui.add_space(10.0);
@@ -203,71 +211,59 @@ impl MyApp {
                     }
                 });
         }
-
-        ui.add_space(20.0);
-        if ui.button("Назад на главную").clicked() {
-            self.current_page = Page::Home;
-        }
     }
 
     fn show_settings(&mut self, ui: &mut egui::Ui, ctx: &egui::CtxRef) {
-        ui.add_space(20.0);
-        ui.heading("Настройки");
-        ui.separator();
+        ui.vertical_centered(|ui| {
+            ui.add_space(20.0);
+            ui.heading("Настройки приложения");
 
-        ui.add_space(10.0);
-        ui.horizontal(|ui| {
-            ui.label("Тема:");
-            if ui.button("Светлая").clicked() {
-                self.theme = egui::Visuals::light();
+            ui.horizontal(|ui| {
+                ui.label("Тема:");
+                egui::ComboBox::from_label("")
+                    .selected_text(if self.theme == egui::Visuals::dark() { "Dark" } else { "Light" })
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.theme, egui::Visuals::dark(), "Dark");
+                        ui.selectable_value(&mut self.theme, egui::Visuals::light(), "Light");
+                    });
+            });
+
+            if ui.button("Сохранить настройки").clicked() {
                 ctx.set_visuals(self.theme.clone());
             }
-            if ui.button("Тёмная").clicked() {
-                self.theme = egui::Visuals::dark();
-                ctx.set_visuals(self.theme.clone());
-            }
+
+            ui.add_space(10.0);
+            ui.horizontal(|ui| {
+                ui.label("Тип графика:");
+                egui::ComboBox::from_label("")
+                    .selected_text(if self.chart_type == ChartType::Line { "Линейный" } else { "Свечной" })
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.chart_type, ChartType::Line, "Линейный");
+                        ui.selectable_value(&mut self.chart_type, ChartType::Candlestick, "Свечной");
+                    });
+            });
         });
-
-        ui.add_space(10.0);
-        ui.horizontal(|ui| {
-            ui.label("Формат графика:");
-            if ui.button("Обычный график").clicked() {
-                self.chart_type = ChartType::Line;
-            }
-            if ui.button("Японские свечи").clicked() {
-                self.chart_type = ChartType::Candlestick;
-            }
-        });
-
-        ui.add_space(20.0);
-        if ui.button("Назад на главную").clicked() {
-            self.current_page = Page::Home;
-        }
-
-        if ui.button("Назад к стратегиям").clicked() {
-            self.current_page = Page::Strategy;
-        }
     }
 
-    fn analyze_strategy(&self) -> Option<States> {
+    fn analyze_strategy(&self) -> Option<(States, Utility)> {
         if let Some(ticker_data) = &self.ticker_data {
             let trade_signal = TradeSignal;
             match self.strategy.as_str() {
                 "Скользящие средние" => {
                     let sma_5 = Sma::new(ticker_data.close.clone(), 5).values();
                     let sma_12 = Sma::new(ticker_data.close.clone(), 12).values();
-                    Some(trade_signal.sma(sma_5, sma_12))
+                    Some((trade_signal.sma(sma_5, sma_12), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
                 }
                 "Авторегрессионная скользящая средняя" => {
                     let arima = Arima::new(ticker_data.close.clone());
-                    Some(trade_signal.arima(arima.model_prediction_time_series()))
+                    Some((trade_signal.arima(arima.model_prediction_time_series()), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
                 }
                 "Система направленного движения" => {
                     let adx = Adx::new(ticker_data.clone(), 14);
                     let di_plus = adx.directional_indicators(true);
                     let di_minus = adx.directional_indicators(false);
                     let adx_values = adx.adx();
-                    Some(trade_signal.adx(di_plus, di_minus, adx_values, false))
+                    Some((trade_signal.adx(di_plus, di_minus, adx_values, false), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
                 }
                 _ => None,
             }

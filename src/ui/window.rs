@@ -9,6 +9,7 @@ use crate::core::utils::states::{States, Utility};
 use crate::ui::app::AssetWise;
 use crate::ui::enums::{ChartType, Page};
 use crate::ui::load::{get_ticker_by_company_name, get_ticker_data};
+use crate::ui::utils::is_valid_date;
 
 impl AssetWise {
     pub(crate) fn show_home(&mut self, ui: &mut egui::Ui) {
@@ -32,6 +33,16 @@ impl AssetWise {
             ui.text_edit_singleline(&mut self.company_name);
         });
         ui.add_space(10.0);
+
+        ui.horizontal(|ui| {
+            ui.label("От (yyyy-mm--dd):");
+            ui.text_edit_singleline(&mut self.date_start);
+            ui.label("До (yyyy-mm--dd):");
+            ui.text_edit_singleline(&mut self.date_end);
+        });
+
+        ui.add_space(20.0);
+
         ui.horizontal(|ui| {
             ui.label("Название стратегии:");
             egui::ComboBox::from_label("")
@@ -46,22 +57,26 @@ impl AssetWise {
         ui.add_space(20.0);
 
         if ui.button("Анализировать").clicked() {
-            match get_ticker_by_company_name(&self.company_name) {
-                Ok(ticker) => {
-                    println!("Ticker: {ticker}");
-                    match get_ticker_data(Arc::new(ticker), "2024-01-01".to_string(), "2024-12-31".to_string(), 24) {
-                        Ok(data) => {
-                            self.ticker_data = Some(data);
-                            self.signal = self.analyze_strategy();
-                        }
+            if !is_valid_date(&self.date_start) || !is_valid_date(&self.date_end) {
+                ui.label("Неправильный формат даты. Используйте формат ГГГГ-ММ-ДД");
+            } else {
+                match get_ticker_by_company_name(&self.company_name) {
+                    Ok(ticker) => {
+                        println!("Ticker: {ticker}");
+                        match get_ticker_data(Arc::new(ticker), self.date_start.clone(), self.date_end.clone(), 24) {
+                            Ok(data) => {
+                                self.ticker_data = Some(data);
+                                self.signal = self.analyze_strategy();
+                            }
 
-                        Err(err) => {
-                            ui.label(format!("Ошибка: {}", err));
+                            Err(err) => {
+                                ui.label(format!("Ошибка: {}", err));
+                            }
                         }
                     }
-                }
-                Err(err) => {
-                    ui.label(format!("Ошибка: {}", err));
+                    Err(err) => {
+                        ui.label(format!("Ошибка: {}", err));
+                    }
                 }
             }
         }

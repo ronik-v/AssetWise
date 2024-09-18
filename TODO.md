@@ -11,3 +11,8 @@
 ## UI features
 1. Update settings [buttons]
 2. Update settings [text style]
+
+
+## Fix
+1. Add date input fields
+2. Add tool that show error for user

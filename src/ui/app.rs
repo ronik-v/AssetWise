@@ -6,7 +6,7 @@ use crate::ui::enums::{ChartType, Page};
 #[derive(Default)]
 pub struct AssetWise {
     pub current_page: Page,
-    pub ticker: String,
+    pub company_name: String,
     pub strategy: String,
     pub theme: egui::Visuals,
     pub chart_type: ChartType,

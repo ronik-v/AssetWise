@@ -8,7 +8,7 @@ use crate::core::signals::signal::{Signal, TradeSignal};
 use crate::core::utils::states::{States, Utility};
 use crate::ui::app::AssetWise;
 use crate::ui::enums::{ChartType, Page};
-use crate::ui::load::get_ticker_data;
+use crate::ui::load::{get_ticker_by_company_name, get_ticker_data};
 
 impl AssetWise {
     pub(crate) fn show_home(&mut self, ui: &mut egui::Ui) {
@@ -28,8 +28,8 @@ impl AssetWise {
 
         ui.add_space(10.0);
         ui.horizontal(|ui| {
-            ui.label("Название тикера:");
-            ui.text_edit_singleline(&mut self.ticker);
+            ui.label("Название комппании:");
+            ui.text_edit_singleline(&mut self.company_name);
         });
         ui.add_space(10.0);
         ui.horizontal(|ui| {
@@ -44,10 +44,25 @@ impl AssetWise {
         });
 
         ui.add_space(20.0);
+
         if ui.button("Анализировать").clicked() {
-            if let Ok(data) = get_ticker_data(Arc::new(self.ticker.clone()), "2024-01-01".to_string(), "2024-12-31".to_string(), 24) {
-                self.ticker_data = Some(data);
-                self.signal = self.analyze_strategy();
+            match get_ticker_by_company_name(&self.company_name) {
+                Ok(ticker) => {
+                    println!("Ticker: {ticker}");
+                    match get_ticker_data(Arc::new(ticker), "2024-01-01".to_string(), "2024-12-31".to_string(), 24) {
+                        Ok(data) => {
+                            self.ticker_data = Some(data);
+                            self.signal = self.analyze_strategy();
+                        }
+
+                        Err(err) => {
+                            ui.label(format!("Ошибка: {}", err));
+                        }
+                    }
+                }
+                Err(err) => {
+                    ui.label(format!("Ошибка: {}", err));
+                }
             }
         }
 

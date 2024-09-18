@@ -3,8 +3,9 @@ mod core;
 
 use eframe::{egui, epi};
 use serde_json::Value as SerdeValue;
-use egui::plot::{Line, Plot, Value, Values, Polygon};
+use egui::plot::{Line, Plot, Value, Values, Polygon, BarChart, Bar};
 use std::sync::Arc;
+use egui::Vec2;
 use reqwest::blocking::Client;
 use crate::core::data::moex_parser::{api_url, prepare_data_structure, Ticker};
 use crate::core::models::arima::Arima;
@@ -135,9 +136,13 @@ impl MyApp {
         ui.add_space(10.0);
         ui.separator();
 
+        let window_size = ui.available_size();
+
         if let Some(data) = &self.ticker_data {
             Plot::new("Chart")
                 .view_aspect(2.0)
+                .width(window_size.x)
+                .height(window_size.y * 0.75)
                 .show(ui, |plot_ui| {
                     match self.chart_type {
                         ChartType::Line => {
@@ -210,6 +215,21 @@ impl MyApp {
                         }
                     }
                 });
+
+            ui.add_space(40.0);
+
+            Plot::new("Closing Price Histogram")
+                .view_aspect(4.0)
+                .width(window_size.x)
+                .height(window_size.y * 0.25)
+                .show(ui, |plot_ui| {
+                    let close_prices_histogram: Vec<Bar> = data.close.iter().enumerate().map(|(i, &p)| {
+                        Bar::new(i as f64, p).width(0.5)
+                    }).collect();
+
+                    let chart = BarChart::new(close_prices_histogram).name("Закрытие цен");
+                    plot_ui.bar_chart(chart);
+                });
         }
     }
 
@@ -218,9 +238,13 @@ impl MyApp {
             ui.add_space(20.0);
             ui.heading("Настройки приложения");
 
+            if ui.button("Вернуться на главную").clicked() {
+                self.current_page = Page::Home
+            }
+
             ui.horizontal(|ui| {
                 ui.label("Тема:");
-                egui::ComboBox::from_label("")
+                egui::ComboBox::from_id_source("theme_combo_box")
                     .selected_text(if self.theme == egui::Visuals::dark() { "Dark" } else { "Light" })
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.theme, egui::Visuals::dark(), "Dark");
@@ -233,9 +257,10 @@ impl MyApp {
             }
 
             ui.add_space(10.0);
+
             ui.horizontal(|ui| {
                 ui.label("Тип графика:");
-                egui::ComboBox::from_label("")
+                egui::ComboBox::from_id_source("chart_type_combo_box")
                     .selected_text(if self.chart_type == ChartType::Line { "Линейный" } else { "Свечной" })
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.chart_type, ChartType::Line, "Линейный");
@@ -244,6 +269,7 @@ impl MyApp {
             });
         });
     }
+
 
     fn analyze_strategy(&self) -> Option<(States, Utility)> {
         if let Some(ticker_data) = &self.ticker_data {

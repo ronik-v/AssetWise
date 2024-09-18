@@ -1,2 +1,4 @@
-pub mod chart_window;
-pub mod main_window;
+pub mod window;
+pub mod app;
+pub mod enums;
+pub mod load;

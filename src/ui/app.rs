@@ -14,6 +14,8 @@ pub struct AssetWise {
     pub ticker_data: Option<Ticker>,
     pub date_start: String,
     pub date_end: String,
+    pub show_error_window: bool,
+    pub error_message: String,
 }
 
 

@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use egui::Align2;
 use egui::plot::{Bar, BarChart, Line, Plot, Polygon, Value, Values};
 use crate::core::models::adx::Adx;
 use crate::core::models::arima::Arima;
@@ -12,6 +13,26 @@ use crate::ui::load::{get_ticker_by_company_name, get_ticker_data};
 use crate::ui::utils::is_valid_date;
 
 impl AssetWise {
+    fn show_error_window(&mut self, ctx: &egui::CtxRef) {
+        let mut close_window = false;
+
+        egui::Window::new("Ошибка")
+            .open(&mut self.show_error_window)
+            .collapsible(false)
+            .resizable(false)
+            .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.label(&self.error_message);
+                if ui.button("Закрыть").clicked() {
+                    close_window = true;
+                }
+            });
+
+        if close_window {
+            self.show_error_window = false;
+        }
+    }
+
     pub(crate) fn show_home(&mut self, ui: &mut egui::Ui) {
         ui.vertical_centered(|ui| {
             ui.add_space(20.0);
@@ -58,7 +79,9 @@ impl AssetWise {
 
         if ui.button("Анализировать").clicked() {
             if !is_valid_date(&self.date_start) || !is_valid_date(&self.date_end) {
-                ui.label("Неправильный формат даты. Используйте формат ГГГГ-ММ-ДД");
+                self.show_error_window = true;
+                self.error_message = "Неправильный формат даты. Используйте формат ГГГГ-ММ-ДД".to_string();
+
             } else {
                 match get_ticker_by_company_name(&self.company_name) {
                     Ok(ticker) => {
@@ -69,13 +92,15 @@ impl AssetWise {
                                 self.signal = self.analyze_strategy();
                             }
 
-                            Err(err) => {
-                                ui.label(format!("Ошибка: {}", err));
+                            Err(e) => {
+                                self.show_error_window = true;
+                                self.error_message = format!("Ошибка при загрузке данных: {}", e);
                             }
                         }
                     }
                     Err(err) => {
-                        ui.label(format!("Ошибка: {}", err));
+                        self.show_error_window = true;
+                        self.error_message = format!("Ошибка: {}", err);
                     }
                 }
             }
@@ -196,6 +221,8 @@ impl AssetWise {
                     plot_ui.bar_chart(chart);
                 });
         }
+
+        self.show_error_window(ctx);
     }
 
     pub(crate) fn show_settings(&mut self, ui: &mut egui::Ui, ctx: &egui::CtxRef) {

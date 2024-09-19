@@ -1,3 +1,4 @@
+use std::fmt::format;
 use std::sync::Arc;
 use egui::Align2;
 use egui::plot::{Bar, BarChart, Line, Plot, Polygon, Value, Values};
@@ -115,21 +116,22 @@ impl AssetWise {
             );
 
             let signal_text = match signal {
-                States::BUY => ("Trade Signal: BUY", egui::Color32::GREEN),
-                States::SELL => ("Trade Signal: SELL", egui::Color32::RED),
-                States::WAIT => ("Trade Signal: WAIT", egui::Color32::YELLOW),
+                States::BUY => ("Сигнал: BUY", egui::Color32::GREEN),
+                States::SELL => ("Сигнал: SELL", egui::Color32::RED),
+                States::WAIT => ("Сигнал: WAIT", egui::Color32::YELLOW),
             };
             ui.colored_label(signal_text.1, signal_text.0);
 
             let utility_text = match utility {
-                Utility::HOLD => ("Utility: HOLD", egui::Color32::GREEN),
-                Utility::EXPECT => ("Utility: EXPECT", egui::Color32::YELLOW),
-                Utility::ESCAPE => ("Utility: ESCAPE", egui::Color32::RED),
+                Utility::HOLD => ("Позиция: HOLD", egui::Color32::GREEN),
+                Utility::EXPECT => ("Позиция: EXPECT", egui::Color32::YELLOW),
+                Utility::ESCAPE => ("Позиция: ESCAPE", egui::Color32::RED),
             };
             ui.colored_label(utility_text.1, utility_text.0);
             ui.add_space(10.0);
 
-            let volatility = strategy_metadata.volatile();
+            let (mean, volatility) = strategy_metadata.volatile();
+            ui.colored_label(egui::Color32::GREEN, format!("Средняя стоймость актива: {} руб.", mean));
             ui.colored_label(egui::Color32::GREEN, format!("Волатильность: {}%", volatility));
 
             let income = strategy_metadata.income();

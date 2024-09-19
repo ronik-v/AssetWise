@@ -10,11 +10,11 @@ pub struct StrategyMetadata {
 impl StrategyMetadata {
     pub fn new(close_prices: Vec<f64>, trade_states: Vec<States>) -> Self { Self { close_prices, trade_states } }
 
-    pub fn volatile(&self) -> f64 {
+    pub fn volatile(&self) -> (f64, f64) {
         let mean = mean(&self.close_prices);
         let std = std(&self.close_prices);
 
-        round_to_decimals((std / mean) * 100.0, 2)
+        (round_to_decimals(mean, 2), round_to_decimals((std / mean) * 100.0, 2))
     }
 
     pub fn income(&self) -> f64 {

@@ -6,6 +6,7 @@ use crate::core::models::ktotm::KTOTM;
 use crate::core::models::sma::Sma;
 use crate::core::models::utility_function::UtilityFunction;
 use crate::core::signals::signal::{Signal, TradeSignal};
+use crate::core::signals::strategy_metadata::StrategyMetadata;
 use crate::core::utils::states::{States, Utility};
 use crate::ui::app::AssetWise;
 use crate::ui::enums::{ChartType, Page, STRATEGY_ARIMA, STRATEGY_KALMAN_FILTER, STRATEGY_SMA};
@@ -107,7 +108,12 @@ impl AssetWise {
         }
 
         ui.add_space(20.0);
-        if let Some((signal, utility)) = &self.signal {
+        if let Some((signal, utility, states)) = &self.signal {
+            let strategy_metadata = StrategyMetadata::new(
+                self.ticker_data.as_ref().map_or_else(Vec::new, |data| data.close.clone()),
+                states.clone()
+            );
+
             let signal_text = match signal {
                 States::BUY => ("Trade Signal: BUY", egui::Color32::GREEN),
                 States::SELL => ("Trade Signal: SELL", egui::Color32::RED),
@@ -121,6 +127,16 @@ impl AssetWise {
                 Utility::ESCAPE => ("Utility: ESCAPE", egui::Color32::RED),
             };
             ui.colored_label(utility_text.1, utility_text.0);
+            ui.add_space(10.0);
+
+            let volatility = strategy_metadata.volatile();
+            ui.colored_label(egui::Color32::GREEN, format!("Волатильность: {}%", volatility));
+
+            let income = strategy_metadata.income();
+            ui.colored_label(egui::Color32::GREEN, format!("Доходность: {}%", income));
+
+            ui.add_space(20.0);
+
         }
 
         ui.add_space(10.0);
@@ -267,22 +283,28 @@ impl AssetWise {
     }
 
 
-    fn analyze_strategy(&self) -> Option<(States, Utility)> {
+    fn analyze_strategy(&self) -> Option<(States, Utility, Vec<States>)> {
         if let Some(ticker_data) = &self.ticker_data {
             let trade_signal = TradeSignal;
             match self.strategy.as_str() {
                 STRATEGY_SMA => {
                     let sma_5 = Sma::new(ticker_data.close.clone(), 5).values();
                     let sma_12 = Sma::new(ticker_data.close.clone(), 12).values();
-                    Some((trade_signal.sma(sma_5, sma_12), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
+                    let states: Vec<States> = trade_signal.sma(sma_5.clone(), sma_12.clone());
+
+                    Some((trade_signal.sma_last(sma_5, sma_12), UtilityFunction::new(ticker_data.clone(), 1.0).result(),  states))
                 }
                 STRATEGY_ARIMA => {
                     let arima = Arima::new(ticker_data.close.clone());
-                    Some((trade_signal.arima_or_kalman(arima.model_prediction_time_series()), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
+                    let states: Vec<States> = trade_signal.arima_or_kalman(arima.model_prediction_time_series());
+
+                    Some((trade_signal.arima_or_kalman_last(arima.model_prediction_time_series()), UtilityFunction::new(ticker_data.clone(), 1.0).result(), states))
                 }
                 STRATEGY_KALMAN_FILTER => {
                     let ktotm = KTOTM::new(ticker_data.close.clone());
-                    Some((trade_signal.arima_or_kalman(ktotm.prediction_trend()), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
+                    let states: Vec<States> = trade_signal.arima_or_kalman(ktotm.prediction_trend());
+
+                    Some((trade_signal.arima_or_kalman_last(ktotm.prediction_trend()), UtilityFunction::new(ticker_data.clone(), 1.0).result(), states))
                 }
                 _ => None,
             }

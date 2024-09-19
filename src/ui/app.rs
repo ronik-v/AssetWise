@@ -10,7 +10,7 @@ pub struct AssetWise {
     pub strategy: String,
     pub theme: egui::Visuals,
     pub chart_type: ChartType,
-    pub signal: Option<(States, Utility)>,
+    pub signal: Option<(States, Utility, Vec<States>)>,
     pub ticker_data: Option<Ticker>,
     pub date_start: String,
     pub date_end: String,

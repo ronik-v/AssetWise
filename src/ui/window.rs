@@ -232,6 +232,12 @@ impl AssetWise {
                 self.current_page = Page::Home
             }
 
+            ui.add_space(20.0);
+
+            if ui.button("Вернуться к анализу").clicked() {
+                self.current_page = Page::Strategy
+            }
+
             ui.horizontal(|ui| {
                 ui.label("Тема:");
                 egui::ComboBox::from_id_source("theme_combo_box")

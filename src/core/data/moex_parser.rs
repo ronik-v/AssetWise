@@ -41,16 +41,3 @@ pub fn prepare_data_structure(data: &[Vec<Value>]) -> Ticker {
         end: data.iter().map(|v| v[7].as_str().unwrap_or("").to_string()).collect(),
     }
 }
-
-pub fn get_ticker_data(ticker: Arc<String>, date_start: String, date_end: String, interval: u32) -> Result<Ticker, Box<dyn std::error::Error>> {
-    // Getting data structure with api
-    let api_data_url = api_url(ticker, date_start, date_end, interval);
-    let client = Client::new();
-    let response = client.get(&api_data_url).send()?;
-    let response_body = response.text()?;
-
-    let json: Value = serde_json::from_str(&response_body)?;
-    let data: Vec<Vec<Value>> = serde_json::from_value(json["candles"]["data"].clone())?;
-
-    Ok(prepare_data_structure(&data))
-}

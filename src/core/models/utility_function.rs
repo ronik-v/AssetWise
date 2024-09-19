@@ -81,8 +81,8 @@ impl UtilityFunction {
             Ok(rate) => {
                 println!("BOUND MEAN RATE = {:?}", rate);
                 let ticker_income: Vec<f64> = self.ticker_income();
-                let beta: f64 = beta(ticker_income.clone(), self.ticker.close.clone());
-                let volatility: f64 = std(ticker_income.clone());
+                let beta: f64 = beta(&ticker_income.clone(), &self.ticker.close.clone());
+                let volatility: f64 = std(&ticker_income);
                 let camp_income: f64 = self.capm_income(ticker_income, rate, beta);
 
                 self.utility_state(camp_income, volatility)

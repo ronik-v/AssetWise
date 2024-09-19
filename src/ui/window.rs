@@ -1,14 +1,14 @@
 use std::sync::Arc;
 use egui::Align2;
 use egui::plot::{Bar, BarChart, Line, Plot, Polygon, Value, Values};
-use crate::core::models::adx::Adx;
 use crate::core::models::arima::Arima;
+use crate::core::models::ktotm::KTOTM;
 use crate::core::models::sma::Sma;
 use crate::core::models::utility_function::UtilityFunction;
 use crate::core::signals::signal::{Signal, TradeSignal};
 use crate::core::utils::states::{States, Utility};
 use crate::ui::app::AssetWise;
-use crate::ui::enums::{ChartType, Page};
+use crate::ui::enums::{ChartType, Page, STRATEGY_ARIMA, STRATEGY_KALMAN_FILTER, STRATEGY_SMA};
 use crate::ui::load::{get_ticker_by_company_name, get_ticker_data};
 use crate::ui::utils::is_valid_date;
 
@@ -69,9 +69,9 @@ impl AssetWise {
             egui::ComboBox::from_label("")
                 .selected_text(&self.strategy)
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut self.strategy, "Скользящие средние".to_string(), "Скользящие средние");
-                    ui.selectable_value(&mut self.strategy, "Авторегрессионная скользящая средняя".to_string(), "Авторегрессионная скользящая средняя");
-                    ui.selectable_value(&mut self.strategy, "Система направленного движения".to_string(), "Система направленного движения");
+                    ui.selectable_value(&mut self.strategy, STRATEGY_SMA.to_string(), STRATEGY_SMA);
+                    ui.selectable_value(&mut self.strategy, STRATEGY_ARIMA.to_string(), STRATEGY_ARIMA);
+                    ui.selectable_value(&mut self.strategy, STRATEGY_KALMAN_FILTER.to_string(), STRATEGY_KALMAN_FILTER);
                 });
         });
 
@@ -139,7 +139,7 @@ impl AssetWise {
                             let close_prices: Vec<Value> = data.close.iter().enumerate().map(|(i, &p)| Value::new(i as f64, p)).collect();
                             plot_ui.line(Line::new(Values::from_values(close_prices)).color(egui::Color32::from_rgb(200, 100, 100)).name("Закрытие"));
 
-                            if self.strategy == "Скользящие средние" {
+                            if self.strategy == STRATEGY_SMA {
                                 let sma5 = Sma::new(data.close.clone(), 5)
                                     .values().iter().enumerate().map(|(i, &p)| Value::new((i + 5) as f64, p)).collect();
                                 let sma12 = Sma::new(data.close.clone(), 12)
@@ -149,18 +149,17 @@ impl AssetWise {
                                 plot_ui.line(Line::new(Values::from_values(sma12)).color(egui::Color32::from_rgb(100, 100, 200)).name("SMA 12"));
                             }
 
-                            if self.strategy == "Авторегрессионная скользящая средняя" {
+                            if self.strategy == STRATEGY_ARIMA {
                                 let arima = Arima::new(data.close.clone());
                                 let arima_values: Vec<Value> = arima.model_prediction_time_series().iter().enumerate().map(|(i, &p)| Value::new(i as f64, p)).collect();
 
                                 plot_ui.line(Line::new(Values::from_values(arima_values)).color(egui::Color32::from_rgb(200, 150, 50)).name("ARIMA"));
                             }
 
-                            if self.strategy == "Система направленного движения" {
-                                let adx = Adx::new(data.clone(), 14);
-                                let adx_values: Vec<Value> = adx.adx().iter().enumerate().map(|(i, &p)| Value::new(i as f64, p)).collect();
-
-                                plot_ui.line(Line::new(Values::from_values(adx_values)).color(egui::Color32::from_rgb(50, 150, 200)).name("ADX"));
+                            if self.strategy == STRATEGY_KALMAN_FILTER {
+                                let ktotm = KTOTM::new(data.close.clone());
+                                let ktotm_values: Vec<Value> = ktotm.prediction_trend().iter().enumerate().map(|(i, &p)| Value::new(i as f64, p)).collect();
+                                plot_ui.line(Line::new(Values::from_values(ktotm_values)).color(egui::Color32::from_rgb(50, 150, 200)).name("KTOTM"));
                             }
                         }
                         ChartType::Candlestick => {
@@ -179,7 +178,7 @@ impl AssetWise {
                                 ])).color(color));
                             }
 
-                            if self.strategy == "Скользящие средние" {
+                            if self.strategy == STRATEGY_SMA {
                                 let sma5 = Sma::new(data.close.clone(), 5)
                                     .values().iter().enumerate().map(|(i, &p)| Value::new((i + 5) as f64, p)).collect();
                                 let sma12 = Sma::new(data.close.clone(), 12)
@@ -189,18 +188,17 @@ impl AssetWise {
                                 plot_ui.line(Line::new(Values::from_values(sma12)).color(egui::Color32::from_rgb(100, 100, 200)).name("SMA 12"));
                             }
 
-                            if self.strategy == "Авторегрессионная скользящая средняя" {
+                            if self.strategy == STRATEGY_ARIMA {
                                 let arima = Arima::new(data.close.clone());
                                 let arima_values: Vec<Value> = arima.model_prediction_time_series().iter().enumerate().map(|(i, &p)| Value::new(i as f64, p)).collect();
 
                                 plot_ui.line(Line::new(Values::from_values(arima_values)).color(egui::Color32::from_rgb(200, 150, 50)).name("ARIMA"));
                             }
 
-                            if self.strategy == "Система направленного движения" {
-                                let adx = Adx::new(data.clone(), 14);
-                                let adx_values: Vec<Value> = adx.adx().iter().enumerate().map(|(i, &p)| Value::new(i as f64, p)).collect();
-
-                                plot_ui.line(Line::new(Values::from_values(adx_values)).color(egui::Color32::from_rgb(50, 150, 200)).name("ADX"));
+                            if self.strategy == STRATEGY_KALMAN_FILTER {
+                                let ktotm = KTOTM::new(data.close.clone());
+                                let ktotm_values: Vec<Value> = ktotm.prediction_trend().iter().enumerate().map(|(i, &p)| Value::new(i as f64, p)).collect();
+                                plot_ui.line(Line::new(Values::from_values(ktotm_values)).color(egui::Color32::from_rgb(50, 150, 200)).name("KTOTM"));
                             }
                         }
                     }
@@ -267,21 +265,18 @@ impl AssetWise {
         if let Some(ticker_data) = &self.ticker_data {
             let trade_signal = TradeSignal;
             match self.strategy.as_str() {
-                "Скользящие средние" => {
+                STRATEGY_SMA => {
                     let sma_5 = Sma::new(ticker_data.close.clone(), 5).values();
                     let sma_12 = Sma::new(ticker_data.close.clone(), 12).values();
                     Some((trade_signal.sma(sma_5, sma_12), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
                 }
-                "Авторегрессионная скользящая средняя" => {
+                STRATEGY_ARIMA => {
                     let arima = Arima::new(ticker_data.close.clone());
-                    Some((trade_signal.arima(arima.model_prediction_time_series()), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
+                    Some((trade_signal.arima_or_kalman(arima.model_prediction_time_series()), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
                 }
-                "Система направленного движения" => {
-                    let adx = Adx::new(ticker_data.clone(), 14);
-                    let di_plus = adx.directional_indicators(true);
-                    let di_minus = adx.directional_indicators(false);
-                    let adx_values = adx.adx();
-                    Some((trade_signal.adx(di_plus, di_minus, adx_values, false), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
+                STRATEGY_KALMAN_FILTER => {
+                    let ktotm = KTOTM::new(ticker_data.close.clone());
+                    Some((trade_signal.arima_or_kalman(ktotm.prediction_trend()), UtilityFunction::new(ticker_data.clone(), 1.0).result()))
                 }
                 _ => None,
             }

@@ -1,33 +1,26 @@
-pub fn mean(data: Vec<f64>) -> f64 {
-    let mut sum: f64 = 0.0;
-    for i in 0..data.len() {
-        sum += data[i]
-    }
-
+pub fn mean(data: &[f64]) -> f64 {
+    let sum: f64 = data.iter().sum();
     sum / data.len() as f64
 }
 
-pub fn std(data: Vec<f64>) -> f64 {
-    // VAR = M[X^ 2] - M[X] ^ 2 \ Q = VAR ^ 0.5
-    let mut mean_square: f64 = 0.0;
-    let mean: f64 = mean(data.clone());
-    for i in 0..data.len() {
-        mean_square += data[i] * data[i];
-    }
-
-    (mean_square - mean) * (mean_square - mean)
+pub fn std(data: &[f64]) -> f64 {
+    let mean = mean(data);
+    let variance: f64 = data.iter()
+        .map(|&x| (x - mean).powi(2))
+        .sum::<f64>() / data.len() as f64;
+    variance.sqrt()
 }
 
-pub fn beta(data_x: Vec<f64>, data_y: Vec<f64>) -> f64 {
+pub fn beta(data_x: &[f64], data_y: &[f64]) -> f64 {
     assert_eq!(data_x.len(), data_y.len());
 
-    let mut cov: f64 = 0.0;
-    let mean_x = mean(data_x.clone());
-    let mean_y = mean(data_y.clone());
+    let mean_x = mean(data_x);
+    let mean_y = mean(data_y);
 
-    for i in 0..data_x.len() {
-        cov += (data_x[i] - mean_x) * (data_y[i] - mean_y);
-    }
+    let covariance: f64 = data_x.iter()
+        .zip(data_y.iter())
+        .map(|(&x, &y)| (x - mean_x) * (y - mean_y))
+        .sum::<f64>() / data_x.len() as f64;
 
-    cov / (std(data_x.clone()) * std(data_y.clone()))
+    covariance / (std(data_x) * std(data_y))
 }

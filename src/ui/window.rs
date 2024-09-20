@@ -1,7 +1,7 @@
-use std::fmt::format;
 use std::sync::Arc;
 use egui::Align2;
 use egui::plot::{Bar, BarChart, Line, Plot, Polygon, Value, Values};
+use crate::core::data::load::{get_ticker_by_company_name, get_ticker_data};
 use crate::core::models::arima::Arima;
 use crate::core::models::ktotm::KTOTM;
 use crate::core::models::sma::Sma;
@@ -11,7 +11,6 @@ use crate::core::signals::strategy_metadata::StrategyMetadata;
 use crate::core::utils::states::{States, Utility};
 use crate::ui::app::AssetWise;
 use crate::ui::enums::{ChartType, Page, STRATEGY_ARIMA, STRATEGY_KALMAN_FILTER, STRATEGY_SMA};
-use crate::ui::load::{get_ticker_by_company_name, get_ticker_data};
 use crate::ui::utils::is_valid_date;
 
 impl AssetWise {

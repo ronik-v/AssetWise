@@ -4,3 +4,4 @@ pub mod ma;
 pub mod ema;
 pub mod utility_function;
 pub mod ktotm;
+pub mod garch;

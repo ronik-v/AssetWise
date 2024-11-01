@@ -1,10 +1,13 @@
 use crate::core::utils::states::States;
 
+// TODO: Need to refactor
+
 pub(crate) trait Signal {
     fn arima_or_kalman(&self, price_data: Vec<f64>) -> Vec<States>;
     fn sma(&self, sma_5_data: Vec<f64>, sma_12_data: Vec<f64>) -> Vec<States>;
     fn arima_or_kalman_last(&self, price_data: Vec<f64>) -> States;
     fn sma_last(&self, sma_5_data: Vec<f64>, sma_12_data: Vec<f64>) -> States;
+    fn garch(&self, price_data: Vec<f64>, volatile_up: Vec<f64>, volatile_down: Vec<f64>) -> Vec<States>;
 }
 
 
@@ -71,5 +74,23 @@ impl Signal for TradeSignal {
         } else {
             States::WAIT
         }
+    }
+
+    fn garch(&self, price_data: Vec<f64>, volatile_up: Vec<f64>, volatile_down: Vec<f64>) -> Vec<States> {
+        let mut states: Vec<States> = Vec::new();
+        for i in 1..price_data.len() {
+            let volatile_diff_up: bool = (price_data[i] - volatile_up[i]) < (price_data[i - 1] - volatile_up[i - 1]);
+            let volatile_diff_down: bool = (price_data[i] - volatile_down[i]) < (price_data[i - 1] - volatile_down[i - 1]);
+
+            if price_data[i] > price_data[i - 1] && volatile_diff_up && volatile_diff_down {
+                states.push(States::BUY)
+            } else if !volatile_diff_up || !volatile_diff_down {
+                states.push(States::WAIT)
+            } else {
+                states.push(States::SELL)
+            }
+        }
+
+        states
     }
 }
